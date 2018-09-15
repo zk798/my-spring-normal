@@ -3,6 +3,7 @@ package com.zrs.spring.formework.context;
 import com.zrs.spring.formework.annotation.Autowried;
 import com.zrs.spring.formework.annotation.Controller;
 import com.zrs.spring.formework.annotation.Service;
+import com.zrs.spring.formework.aop.AopConfig;
 import com.zrs.spring.formework.beans.BeanDifinition;
 import com.zrs.spring.formework.beans.BeanPostProcessor;
 import com.zrs.spring.formework.beans.BeanWrapper;
@@ -11,12 +12,14 @@ import com.zrs.spring.formework.core.BeanFactory;
 import lombok.Getter;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
-public class ApplicationContext implements BeanFactory {
+public class ApplicationContext extends DefaultListableBeanFactory implements BeanFactory {
 
     public String[] configLocations;
 
@@ -65,6 +68,7 @@ public class ApplicationContext implements BeanFactory {
                 continue;
             }
             Object bean = getBean(beanName);
+            System.out.println(bean.getClass());
 
         }
     }
@@ -152,6 +156,11 @@ public class ApplicationContext implements BeanFactory {
         //before
         beanPostProcessor.postProcessBeforeInitialization(instance,beanName);
         BeanWrapper beanWrapper = new BeanWrapper(instance);
+        try {
+            beanWrapper.setAopConfig(instantionAopConfig(beanDifinition));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         beanWrapper.setBeanPostProcessor(beanPostProcessor);
         BeanWrapperMap.put(beanName,beanWrapper);
 
@@ -188,6 +197,26 @@ public class ApplicationContext implements BeanFactory {
 
     public String[] getBeanDefinitionNames() {
        return beanDifinitionMap.keySet().toArray(new String[0]);
+    }
+
+    private AopConfig instantionAopConfig(BeanDifinition beanDifinition) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException {
+
+        AopConfig config =new AopConfig();
+        String expression = beanDifinitionReader.getConfig().getProperty("pointCut");
+        String[] before = beanDifinitionReader.getConfig().getProperty("aspectBefore").split("\\s");
+        String[] after = beanDifinitionReader.getConfig().getProperty("aspectAfter").split("\\s");
+        Class<?> clazz = Class.forName(beanDifinition.getBeanClassName());
+        Class<?> aspectClass = Class.forName(before[0]);
+
+        Pattern compile = Pattern.compile(expression);
+        for (Method m : clazz.getMethods()) {
+            if(compile.matcher(m.toString()).matches()){
+                config.put(m,new Method[]{aspectClass.getMethod(before[1]),aspectClass.getMethod(after[1])},aspectClass.newInstance());
+            }
+        }
+
+        return config;
+
     }
 
 }

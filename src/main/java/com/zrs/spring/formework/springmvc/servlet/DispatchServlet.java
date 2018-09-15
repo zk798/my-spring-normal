@@ -3,6 +3,7 @@ package com.zrs.spring.formework.springmvc.servlet;
 import com.zrs.spring.formework.annotation.Controller;
 import com.zrs.spring.formework.annotation.RequestMapping;
 import com.zrs.spring.formework.annotation.RequestParameter;
+import com.zrs.spring.formework.aop.AopProxyUtils;
 import com.zrs.spring.formework.context.ApplicationContext;
 import com.zrs.spring.formework.springmvc.HandlerAdapter;
 import com.zrs.spring.formework.springmvc.HandlerMapping;
@@ -210,8 +211,9 @@ public class DispatchServlet extends HttpServlet {
     private void initHandlerMappings(ApplicationContext context) {
         String[] beanNames = context.getBeanDefinitionNames();
         for (String beanName : beanNames) {
-            Object instance = context.getBean(beanName);
-            Class<?> clazz = instance.getClass();
+            Object proxy = context.getBean(beanName);
+            Object controller = AopProxyUtils.getTargetObject(proxy);
+            Class<?> clazz = controller.getClass();
 
             if(!clazz.isAnnotationPresent(Controller.class)){
                 continue;
@@ -230,7 +232,7 @@ public class DispatchServlet extends HttpServlet {
                 RequestMapping annotation = method.getAnnotation(RequestMapping.class);
                 String regex = baseUrl+ annotation.value().replaceAll("/+","/");
                 Pattern pattern = Pattern.compile(regex);
-                HandlerMapping handlerMapping = new HandlerMapping(instance, method, pattern);
+                HandlerMapping handlerMapping = new HandlerMapping(controller, method, pattern);
                 handlerMappings.add(handlerMapping);
                 System.out.println("mapping:" + regex + "," + method);
             }

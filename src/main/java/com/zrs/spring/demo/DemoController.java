@@ -20,6 +20,7 @@ public class DemoController {
     @RequestMapping("/v")
     public ModelAndView getName(@RequestParameter("name")String name){
 
+        demoService.get();
         ModelAndView modelAndView = new ModelAndView();
         modelAndView.setViewName("index.html");
         Map<String,Object> map = new HashMap<>();
