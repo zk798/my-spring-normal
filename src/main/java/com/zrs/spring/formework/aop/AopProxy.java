@@ -2,9 +2,11 @@ package com.zrs.spring.formework.aop;
 
 import lombok.Setter;
 
+import javax.sql.DataSource;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.sql.Connection;
 
 public class AopProxy implements InvocationHandler {
 
@@ -25,6 +27,9 @@ public class AopProxy implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
         Method m = this.target.getClass().getMethod(method.getName(),method.getParameterTypes());
+
+
+
         if(config.contains(m)){
             AopConfig.Aspect aspect = config.get(m);
             aspect.getPoints()[0].invoke(aspect.getAspect());

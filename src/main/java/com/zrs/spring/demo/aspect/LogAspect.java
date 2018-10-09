@@ -1,4 +1,4 @@
-package com.zrs.spring.formework.aspect;
+package com.zrs.spring.demo.aspect;
 
 public class LogAspect {
     public void before(){
